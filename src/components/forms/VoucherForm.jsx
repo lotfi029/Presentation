@@ -130,10 +130,6 @@ export default function VoucherForm() {
   return (
     <>
       <form onSubmit={submit} className="voucher-form">
-        <div className="inline-alert">
-          <span>{t('unsupportedVoucherType')}</span>
-        </div>
-
         <div className="form-row">
           <FormGroup label={t('type')} error={errors.voucherType?.message} required>
             <select className="form-control" {...register('voucherType')}>

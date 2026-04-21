@@ -21,7 +21,7 @@ export default function AppShell() {
         <Topbar />
         <section className="page-content">
           {error ? <div className="inline-alert danger">{error.message || t('fetchError')}</div> : null}
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <div className="api-hint">{t('apiBaseHint')}</div>
           )}
           <Routes>
