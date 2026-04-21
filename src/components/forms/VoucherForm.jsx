@@ -101,8 +101,12 @@ export default function VoucherForm() {
 
   const submit = handleSubmit(async (values) => {
     try {
+      const isImport = values.voucherType === 'import'
+
       await createVoucher({
-        IsImport: values.voucherType === 'import',
+        IsImport: isImport,
+        isImport: isImport,
+        isImporting: isImport,
         voucherNumber: values.voucherNumber,
         itemId: Number(values.itemId),
         quantity: Number(values.quantity),
