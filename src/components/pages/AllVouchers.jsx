@@ -31,26 +31,32 @@ export default function AllVouchers() {
     voucher.isImport ? t('import') : t('export')
 
   const filteredVouchers = useMemo(() => {
-    return vouchers.filter((voucher) => {
-      const voucherDate = voucher.createdAt ? new Date(voucher.createdAt) : null
-      const manufacturerId = String(
-        voucher.manufacturerId ?? voucher.manufacture?.id ?? voucher.manufacturer?.id ?? '',
-      )
+    return vouchers
+      .filter((voucher) => {
+        const voucherDate = voucher.createdAt ? new Date(voucher.createdAt) : null
+        const manufacturerId = String(
+          voucher.manufacturerId ?? voucher.manufacture?.id ?? voucher.manufacturer?.id ?? '',
+        )
 
-      if (filters.startDate && voucherDate && voucherDate < new Date(filters.startDate)) return false
-      if (filters.endDate && voucherDate && voucherDate > new Date(`${filters.endDate}T23:59:59.999`)) {
-        return false
-      }
-      if (filters.itemId && String(voucher.itemId) !== filters.itemId) return false
-      if (filters.projectId && String(voucher.projectId) !== filters.projectId) return false
-      if (filters.manufacturerId && manufacturerId !== filters.manufacturerId) return false
-      if (filters.minPrice && Number(voucher.price) < Number(filters.minPrice)) return false
-      if (filters.maxPrice && Number(voucher.price) > Number(filters.maxPrice)) return false
-      if (filters.minQuantity && Number(voucher.quantity) < Number(filters.minQuantity)) return false
-      if (filters.maxQuantity && Number(voucher.quantity) > Number(filters.maxQuantity)) return false
+        if (filters.startDate && voucherDate && voucherDate < new Date(filters.startDate)) return false
+        if (
+          filters.endDate &&
+          voucherDate &&
+          voucherDate > new Date(`${filters.endDate}T23:59:59.999`)
+        ) {
+          return false
+        }
+        if (filters.itemId && String(voucher.itemId) !== filters.itemId) return false
+        if (filters.projectId && String(voucher.projectId) !== filters.projectId) return false
+        if (filters.manufacturerId && manufacturerId !== filters.manufacturerId) return false
+        if (filters.minPrice && Number(voucher.price) < Number(filters.minPrice)) return false
+        if (filters.maxPrice && Number(voucher.price) > Number(filters.maxPrice)) return false
+        if (filters.minQuantity && Number(voucher.quantity) < Number(filters.minQuantity)) return false
+        if (filters.maxQuantity && Number(voucher.quantity) > Number(filters.maxQuantity)) return false
 
-      return true
-    })
+        return true
+      })
+      .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
   }, [filters, vouchers])
 
   const buildExportPayload = () => {

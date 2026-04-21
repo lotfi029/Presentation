@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import Card from '../shared/Card'
 import { useData } from '../../hooks/useData'
 import { useLanguage } from '../../hooks/useLanguage'
@@ -15,6 +16,14 @@ export default function Dashboard() {
 
     return isImport ? t('import') : t('export')
   }
+
+  const recentVouchers = useMemo(
+    () =>
+      [...vouchers].sort(
+        (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
+      ),
+    [vouchers],
+  )
 
   return (
     <div className="page-stack">
@@ -41,9 +50,9 @@ export default function Dashboard() {
         <Card title={t('recentVouchers')}>
           {loadingMap.bootstrap ? (
             <p className="muted">{t('loading')}</p>
-          ) : vouchers.length ? (
+          ) : recentVouchers.length ? (
             <div className="list-stack">
-              {vouchers.slice(0, 5).map((voucher) => (
+              {recentVouchers.slice(0, 5).map((voucher) => (
                 <div key={voucher.id} className="list-row">
                   <div>
                     <strong>{voucher.voucherNumber}</strong>
