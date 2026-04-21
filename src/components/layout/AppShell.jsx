@@ -7,6 +7,8 @@ import SearchVoucher from '../pages/SearchVoucher'
 import AllVouchers from '../pages/AllVouchers'
 import ItemsManagement from '../pages/ItemsManagement'
 import ProjectsManagement from '../pages/ProjectsManagement'
+import UnitsManagement from '../pages/UnitsManagement'
+import ManufacturesManagement from '../pages/ManufacturesManagement'
 import { useData } from '../../hooks/useData'
 import { useLanguage } from '../../hooks/useLanguage'
 
@@ -31,6 +33,8 @@ export default function AppShell() {
             <Route path="/vouchers" element={<AllVouchers />} />
             <Route path="/items" element={<ItemsManagement />} />
             <Route path="/projects" element={<ProjectsManagement />} />
+            <Route path="/units" element={<UnitsManagement />} />
+            <Route path="/manufactures" element={<ManufacturesManagement />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </section>

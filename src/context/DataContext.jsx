@@ -32,8 +32,8 @@ export function DataProvider({ children }) {
 
   const withLoading = useCallback(async (key, action) => {
     setLoadingMap((current) => ({ ...current, [key]: true }))
-    setError(null)
     try {
+      setError(null)
       return await action()
     } catch (err) {
       setError(err)
@@ -106,6 +106,7 @@ export function DataProvider({ children }) {
   const refreshAll = useCallback(async () => {
     setLoadingMap((current) => ({ ...current, bootstrap: true }))
     try {
+      setError(null)
       const [items, manufactures, projects, units, vouchers, minimumNotifications] =
         await Promise.all([
           itemsApi.getAll(),
@@ -127,7 +128,7 @@ export function DataProvider({ children }) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      refreshAll().catch(() => {})
+      refreshAll()
     }, 0)
 
     return () => window.clearTimeout(timer)
@@ -206,11 +207,61 @@ export function DataProvider({ children }) {
     [withLoading],
   )
 
+  const updateUnit = useCallback(
+    async (id, payload) => {
+      const updated = await withLoading('units', () => unitsApi.update(id, payload))
+      setData((current) => ({
+        ...current,
+        units: current.units.map((unit) => (unit.id === id ? updated : unit)),
+      }))
+      return updated
+    },
+    [withLoading],
+  )
+
+  const deleteUnit = useCallback(
+    async (id) => {
+      await withLoading('units', () => unitsApi.remove(id))
+      setData((current) => ({
+        ...current,
+        units: current.units.filter((unit) => unit.id !== id),
+      }))
+    },
+    [withLoading],
+  )
+
   const createManufacture = useCallback(
     async (payload) => {
       const created = await withLoading('manufactures', () => manufacturesApi.create(payload))
       setData((current) => ({ ...current, manufactures: [created, ...current.manufactures] }))
       return created
+    },
+    [withLoading],
+  )
+
+  const updateManufacture = useCallback(
+    async (id, payload) => {
+      const updated = await withLoading('manufactures', () =>
+        manufacturesApi.update(id, payload),
+      )
+      setData((current) => ({
+        ...current,
+        manufactures: current.manufactures.map((manufacture) =>
+          manufacture.id === id ? updated : manufacture,
+        ),
+      }))
+      return updated
+    },
+    [withLoading],
+  )
+
+  const deleteManufacture = useCallback(
+    async (id) => {
+      await withLoading('manufactures', () => manufacturesApi.remove(id))
+      setData((current) => ({
+        ...current,
+        manufactures: current.manufactures.filter((manufacture) => manufacture.id !== id),
+      }))
     },
     [withLoading],
   )
@@ -259,7 +310,11 @@ export function DataProvider({ children }) {
       updateProject,
       deleteProject,
       createUnit,
+      updateUnit,
+      deleteUnit,
       createManufacture,
+      updateManufacture,
+      deleteManufacture,
       createVoucher,
       deleteVoucher,
       exportVouchersToExcel,
@@ -282,7 +337,11 @@ export function DataProvider({ children }) {
       updateProject,
       deleteProject,
       createUnit,
+      updateUnit,
+      deleteUnit,
       createManufacture,
+      updateManufacture,
+      deleteManufacture,
       createVoucher,
       deleteVoucher,
       exportVouchersToExcel,

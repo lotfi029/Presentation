@@ -3,7 +3,7 @@ import { useForm } from '../../hooks/useForm'
 import Button from '../shared/Button'
 import FormGroup from '../shared/FormGroup'
 
-export default function ManufactureForm({ onSubmit, loading, labels }) {
+export default function ManufactureForm({ onSubmit, loading, labels, initialValues }) {
   const {
     register,
     handleSubmit,
@@ -11,12 +11,14 @@ export default function ManufactureForm({ onSubmit, loading, labels }) {
     formState: { errors },
   } = useForm({
     schema: simpleNameSchema,
-    defaultValues: { name: '' },
+    defaultValues: initialValues ?? { name: '' },
   })
 
   const submit = handleSubmit(async (values) => {
     await onSubmit(values)
-    reset()
+    if (!initialValues) {
+      reset()
+    }
   })
 
   return (

@@ -50,6 +50,7 @@ export default function VoucherForm() {
   const submit = handleSubmit(async (values) => {
     try {
       await createVoucher({
+        isImporting: values.voucherType === 'import',
         createdAt: new Date(values.createdAt).toISOString(),
         voucherNumber: values.voucherNumber,
         itemId: Number(values.itemId),
@@ -164,7 +165,12 @@ export default function VoucherForm() {
             error={errors.unitId?.message}
             required
             actions={
-              <Button variant="ghost" className="btn-sm" onClick={() => setUnitModalOpen(true)}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="btn-sm"
+                onClick={() => setUnitModalOpen(true)}
+              >
                 + {t('addUnit')}
               </Button>
             }
@@ -203,6 +209,7 @@ export default function VoucherForm() {
             required
             actions={
               <Button
+                type="button"
                 variant="ghost"
                 className="btn-sm"
                 onClick={() => setManufactureModalOpen(true)}

@@ -10,6 +10,8 @@ const routeMeta = {
   '/vouchers': { title: 'allVouchers', subtitle: 'allVouchersSub' },
   '/items': { title: 'items', subtitle: 'itemsSub' },
   '/projects': { title: 'projects', subtitle: 'projectsSub' },
+  '/units': { title: 'units', subtitle: 'unitsSub' },
+  '/manufactures': { title: 'manufactures', subtitle: 'manufacturesSub' },
 }
 
 export default function Topbar() {

@@ -1,5 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { FiBox, FiClipboard, FiFolder, FiGrid, FiSearch } from 'react-icons/fi'
+import {
+  FiBox,
+  FiClipboard,
+  FiFolder,
+  FiGrid,
+  FiPackage,
+  FiSearch,
+  FiTruck,
+} from 'react-icons/fi'
 import { useLanguage } from '../../hooks/useLanguage'
 
 const navItems = [
@@ -9,6 +17,8 @@ const navItems = [
   { to: '/vouchers', labelKey: 'allVouchers', icon: <FiClipboard /> },
   { to: '/items', labelKey: 'items', icon: <FiBox /> },
   { to: '/projects', labelKey: 'projects', icon: <FiFolder /> },
+  { to: '/units', labelKey: 'units', icon: <FiPackage /> },
+  { to: '/manufactures', labelKey: 'manufactures', icon: <FiTruck /> },
 ]
 
 export default function Sidebar() {
