@@ -41,6 +41,7 @@ export default function ItemsManagement() {
           labels={{
             itemName: t('itemName'),
             itemCode: t('itemCode'),
+            quantity: t('quantity'),
             minQuantity: t('minQuantity'),
             maxQuantity: t('maxQuantity'),
             save: t('save'),
@@ -53,6 +54,7 @@ export default function ItemsManagement() {
           columns={[
             { key: 'name', label: t('itemName') },
             { key: 'itemCode', label: t('itemCode') },
+            { key: 'quantity', label: t('quantity') },
             { key: 'min', label: t('minQuantity') },
             { key: 'max', label: t('maxQuantity') },
             { key: 'actions', label: t('actions') },
@@ -63,6 +65,7 @@ export default function ItemsManagement() {
             <tr key={item.id}>
               <td>{item.name}</td>
               <td>{item.itemCode}</td>
+              <td>{formatNumber(item.quantity, locale)}</td>
               <td>{formatNumber(item.minQuantity, locale)}</td>
               <td>{formatNumber(item.maxQuantity, locale)}</td>
               <td>

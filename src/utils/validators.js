@@ -16,6 +16,7 @@ export const voucherSchema = z.object({
 export const itemSchema = z.object({
   name: z.string().min(1),
   itemCode: z.string().min(1),
+  quantity: z.coerce.number().int().min(0),
   minQuantity: z.coerce.number().int().min(0),
   maxQuantity: z.coerce.number().int().min(1),
 })

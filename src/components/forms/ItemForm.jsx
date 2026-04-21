@@ -15,6 +15,7 @@ export default function ItemForm({ initialValues, onSubmit, loading, labels }) {
       initialValues ?? {
         name: '',
         itemCode: '',
+        quantity: 0,
         minQuantity: 0,
         maxQuantity: 1,
       },
@@ -25,6 +26,7 @@ export default function ItemForm({ initialValues, onSubmit, loading, labels }) {
     reset({
       name: '',
       itemCode: '',
+      quantity: 0,
       minQuantity: 0,
       maxQuantity: 1,
     })
@@ -46,6 +48,11 @@ export default function ItemForm({ initialValues, onSubmit, loading, labels }) {
         </FormGroup>
         <FormGroup label={labels.maxQuantity} error={errors.maxQuantity?.message} required>
           <input className="form-control" type="number" {...register('maxQuantity')} />
+        </FormGroup>
+      </div>
+      <div className="form-row">
+        <FormGroup label={labels.quantity} error={errors.quantity?.message} required>
+          <input className="form-control" type="number" {...register('quantity')} />
         </FormGroup>
       </div>
       <div className="form-actions">
