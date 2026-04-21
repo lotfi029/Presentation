@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useData } from '../../hooks/useData'
 import { useLanguage } from '../../hooks/useLanguage'
 import { useNotification } from '../../hooks/useNotification'
+import { friendlyError } from '../../context/DataContext'
 import { downloadBlob, formatDate, formatNumber } from '../../utils/formatters'
 import Card from '../shared/Card'
 import Button from '../shared/Button'
@@ -25,12 +26,9 @@ export default function AllVouchers() {
     maxQuantity: '',
   })
 
-  const getVoucherTypeLabel = (voucher) => {
-    const isImport =
-      voucher.IsImport ?? voucher.isImport ?? voucher.isImporting ?? false
-
-    return isImport ? t('import') : t('export')
-  }
+  // ✅ FIX: vouchers are normalized in DataContext — isImport is always a plain boolean
+  const getVoucherTypeLabel = (voucher) =>
+    voucher.isImport ? t('import') : t('export')
 
   const filteredVouchers = useMemo(() => {
     return vouchers.filter((voucher) => {
@@ -77,7 +75,8 @@ export default function AllVouchers() {
       await deleteVoucher(id)
       notification.success(t('deleteSuccess'))
     } catch (error) {
-      notification.error(error.message)
+      const friendly = friendlyError(error?.message ?? '')
+      notification.error(language === 'ar' ? friendly.ar : friendly.en)
     }
   }
 
@@ -87,7 +86,8 @@ export default function AllVouchers() {
       downloadBlob(blob, 'vouchers.xlsx')
       notification.success(t('exportSuccess'))
     } catch (error) {
-      notification.error(error.message)
+      const friendly = friendlyError(error?.message ?? '')
+      notification.error(language === 'ar' ? friendly.ar : friendly.en)
     }
   }
 
@@ -215,7 +215,12 @@ export default function AllVouchers() {
         emptyMessage={t('empty')}
         renderRow={(voucher) => (
           <tr key={voucher.id}>
-            <td>{getVoucherTypeLabel(voucher)}</td>
+            {/* ✅ FIX: read the normalized plain-boolean isImport */}
+            <td>
+              <span className={`badge ${voucher.isImport ? 'badge-import' : 'badge-export'}`}>
+                {getVoucherTypeLabel(voucher)}
+              </span>
+            </td>
             <td>{voucher.voucherNumber}</td>
             <td>
               {voucher.item?.name || '-'}

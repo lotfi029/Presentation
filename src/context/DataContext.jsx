@@ -8,6 +8,111 @@ import {
 } from '../api/endpoints'
 import { DataContext } from './contexts'
 
+// ─── Voucher normalizer ────────────────────────────────────────────────────────
+/**
+ * The backend may return the import flag under any of these keys:
+ *   IsImport | isImport | isImporting | type | voucherType
+ *
+ * This function resolves whichever key is present and stores the result as a
+ * plain boolean under `isImport` so every component can rely on one field.
+ */
+function normalizeVoucher(v) {
+  // Check every known key the API has ever used
+  const candidates = [v.IsImport, v.isImport, v.isImporting]
+
+  let isImport = null
+  for (const c of candidates) {
+    if (typeof c === 'boolean') { isImport = c; break }
+    if (typeof c === 'string')  { isImport = c.toLowerCase() === 'true'; break }
+    if (c === 1 || c === 0)     { isImport = c === 1; break }
+  }
+
+  // String-based type fields ("import" / "export")
+  if (isImport === null) {
+    const typeStr = v.type ?? v.voucherType ?? ''
+    if (typeof typeStr === 'string' && typeStr.length > 0) {
+      isImport = typeStr.toLowerCase() === 'import'
+    }
+  }
+
+  // Ultimate fallback — default to false so it shows "export" rather than hiding
+  if (isImport === null) isImport = false
+
+  return { ...v, isImport }
+}
+
+// ─── Friendly error messages ──────────────────────────────────────────────────
+/**
+ * Map raw API / network error messages to human-friendly Arabic/English strings.
+ * Returns { ar, en } so the UI can pick based on current language.
+ */
+export function friendlyError(rawMessage = '') {
+  const msg = rawMessage.toLowerCase()
+
+  if (/network|fetch|econnrefused|net::err/i.test(msg)) {
+    return {
+      ar: 'تعذّر الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.',
+      en: 'Unable to reach the server. Please check your connection and try again.',
+    }
+  }
+  if (/401|unauthorized/i.test(msg)) {
+    return {
+      ar: 'غير مصرح لك بتنفيذ هذا الإجراء. يرجى تسجيل الدخول.',
+      en: 'You are not authorized. Please log in and try again.',
+    }
+  }
+  if (/403|forbidden/i.test(msg)) {
+    return {
+      ar: 'ليس لديك صلاحية للقيام بهذا الإجراء.',
+      en: 'You do not have permission to perform this action.',
+    }
+  }
+  if (/404|not found/i.test(msg)) {
+    return {
+      ar: 'البيانات المطلوبة غير موجودة.',
+      en: 'The requested record was not found.',
+    }
+  }
+  if (/409|conflict|duplicate|already exists/i.test(msg)) {
+    return {
+      ar: 'هذا السجل موجود مسبقاً. يرجى التحقق من البيانات.',
+      en: 'A record with these details already exists.',
+    }
+  }
+  if (/quantity|stock|enough|insufficient|كمية/i.test(msg)) {
+    return {
+      ar: 'الكمية المتاحة من هذا الصنف غير كافية لإتمام السند.',
+      en: 'There is not enough stock for this item to complete the voucher.',
+    }
+  }
+  if (/bad request|400|validation/i.test(msg)) {
+    return {
+      ar: 'بعض البيانات المُدخلة غير صحيحة. يرجى مراجعة الحقول والمحاولة مجدداً.',
+      en: 'Some of the entered data is invalid. Please review the fields and try again.',
+    }
+  }
+  if (/500|internal server/i.test(msg)) {
+    return {
+      ar: 'حدث خطأ في الخادم. يرجى المحاولة لاحقاً.',
+      en: 'A server error occurred. Please try again later.',
+    }
+  }
+  if (/timeout|timed out/i.test(msg)) {
+    return {
+      ar: 'انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.',
+      en: 'The request timed out. Please try again.',
+    }
+  }
+
+  // Generic fallback
+  return {
+    ar: 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
+    en: rawMessage || 'An unexpected error occurred. Please try again.',
+  }
+}
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
 const initialData = {
   items: [],
   manufactures: [],
@@ -86,7 +191,9 @@ export function DataProvider({ children }) {
   const refreshVouchers = useCallback(
     () =>
       withLoading('vouchers', async () => {
-        const vouchers = await vouchersApi.getAll()
+        const raw = await vouchersApi.getAll()
+        // ✅ FIX: normalize every voucher so isImport is always a plain boolean
+        const vouchers = raw.map(normalizeVoucher)
         setData((current) => ({ ...current, vouchers }))
         return vouchers
       }),
@@ -107,7 +214,7 @@ export function DataProvider({ children }) {
     setLoadingMap((current) => ({ ...current, bootstrap: true }))
     try {
       setError(null)
-      const [items, manufactures, projects, units, vouchers, minimumNotifications] =
+      const [items, manufactures, projects, units, rawVouchers, minimumNotifications] =
         await Promise.all([
           itemsApi.getAll(),
           manufacturesApi.getAll(),
@@ -116,6 +223,9 @@ export function DataProvider({ children }) {
           vouchersApi.getAll(),
           itemsApi.getMinimumNotifications(),
         ])
+
+      // ✅ FIX: normalize vouchers on every full refresh
+      const vouchers = rawVouchers.map(normalizeVoucher)
 
       setData({ items, manufactures, projects, units, vouchers, minimumNotifications })
     } catch (err) {
@@ -268,7 +378,9 @@ export function DataProvider({ children }) {
 
   const createVoucher = useCallback(
     async (payload) => {
-      const created = await withLoading('vouchers', () => vouchersApi.create(payload))
+      const raw = await withLoading('vouchers', () => vouchersApi.create(payload))
+      // ✅ FIX: normalize the newly created voucher before adding it to state
+      const created = normalizeVoucher(raw)
       setData((current) => ({ ...current, vouchers: [created, ...current.vouchers] }))
       return created
     },
