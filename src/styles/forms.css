@@ -1,0 +1,67 @@
+.voucher-form,
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-label {
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.required {
+  color: var(--danger);
+}
+
+.form-control {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 11px 13px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.form-control:focus {
+  outline: 2px solid rgba(29, 158, 117, 0.18);
+  border-color: var(--primary);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.form-row-4 {
+  grid-template-columns: 1.2fr 1fr 1fr 1.2fr;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 0.82rem;
+}
+
+.search-panel {
+  margin-bottom: 16px;
+}
