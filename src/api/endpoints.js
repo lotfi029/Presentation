@@ -12,6 +12,12 @@ export const itemsApi = {
   ...resource('/api/items'),
   getMinimumNotifications: async () =>
     (await apiClient.get('/api/items/minimum-notification')).data,
+  exportExcel: async (payload) =>
+    (
+      await apiClient.post('/api/items/export/excel', payload, {
+        responseType: 'blob',
+      })
+    ).data,
 }
 export const manufacturesApi = resource('/api/manufactures')
 export const projectsApi = resource('/api/projects')

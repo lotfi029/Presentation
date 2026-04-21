@@ -79,6 +79,12 @@
   overflow-x: auto;
 }
 
+.table-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -113,6 +119,44 @@ th {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.table-pagination-summary {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.table-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.table-page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.table-page-size .form-control {
+  min-width: 88px;
+}
+
+.table-page-indicator {
+  min-width: 56px;
+  text-align: center;
+  color: var(--text-muted);
 }
 
 .voucher-card {

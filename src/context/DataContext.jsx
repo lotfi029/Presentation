@@ -8,7 +8,6 @@ import {
 } from '../api/endpoints'
 import { DataContext } from './contexts'
 
-// ─── Voucher normalizer ────────────────────────────────────────────────────────
 /**
  * The backend may return the import flag under any of these keys:
  *   IsImport | isImport | isImporting | type | voucherType
@@ -17,17 +16,24 @@ import { DataContext } from './contexts'
  * plain boolean under `isImport` so every component can rely on one field.
  */
 function normalizeVoucher(v) {
-  // Check every known key the API has ever used
   const candidates = [v.IsImport, v.isImport, v.isImporting]
 
   let isImport = null
-  for (const c of candidates) {
-    if (typeof c === 'boolean') { isImport = c; break }
-    if (typeof c === 'string')  { isImport = c.toLowerCase() === 'true'; break }
-    if (c === 1 || c === 0)     { isImport = c === 1; break }
+  for (const candidate of candidates) {
+    if (typeof candidate === 'boolean') {
+      isImport = candidate
+      break
+    }
+    if (typeof candidate === 'string') {
+      isImport = candidate.toLowerCase() === 'true'
+      break
+    }
+    if (candidate === 1 || candidate === 0) {
+      isImport = candidate === 1
+      break
+    }
   }
 
-  // String-based type fields ("import" / "export")
   if (isImport === null) {
     const typeStr = v.type ?? v.voucherType ?? ''
     if (typeof typeStr === 'string' && typeStr.length > 0) {
@@ -35,13 +41,15 @@ function normalizeVoucher(v) {
     }
   }
 
-  // Ultimate fallback — default to false so it shows "export" rather than hiding
   if (isImport === null) isImport = false
 
   return { ...v, isImport }
 }
 
-// ─── Friendly error messages ──────────────────────────────────────────────────
+function hasEntityId(entity) {
+  return Boolean(entity && typeof entity === 'object' && entity.id !== undefined && entity.id !== null)
+}
+
 /**
  * Map raw API / network error messages to human-friendly Arabic/English strings.
  * Returns { ar, en } so the UI can pick based on current language.
@@ -104,14 +112,11 @@ export function friendlyError(rawMessage = '') {
     }
   }
 
-  // Generic fallback
   return {
     ar: 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
     en: rawMessage || 'An unexpected error occurred. Please try again.',
   }
 }
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
 
 const initialData = {
   items: [],
@@ -192,7 +197,6 @@ export function DataProvider({ children }) {
     () =>
       withLoading('vouchers', async () => {
         const raw = await vouchersApi.getAll()
-        // ✅ FIX: normalize every voucher so isImport is always a plain boolean
         const vouchers = raw.map(normalizeVoucher)
         setData((current) => ({ ...current, vouchers }))
         return vouchers
@@ -210,6 +214,14 @@ export function DataProvider({ children }) {
     [withLoading],
   )
 
+  const syncItemAlerts = useCallback(async () => {
+    try {
+      await refreshMinimumNotifications()
+    } catch {
+      // Keep the main mutation successful even if alert refresh fails.
+    }
+  }, [refreshMinimumNotifications])
+
   const refreshAll = useCallback(async () => {
     setLoadingMap((current) => ({ ...current, bootstrap: true }))
     try {
@@ -224,7 +236,6 @@ export function DataProvider({ children }) {
           itemsApi.getMinimumNotifications(),
         ])
 
-      // ✅ FIX: normalize vouchers on every full refresh
       const vouchers = rawVouchers.map(normalizeVoucher)
 
       setData({ items, manufactures, projects, units, vouchers, minimumNotifications })
@@ -247,22 +258,43 @@ export function DataProvider({ children }) {
   const createItem = useCallback(
     async (payload) => {
       const created = await withLoading('items', () => itemsApi.create(payload))
-      setData((current) => ({ ...current, items: [created, ...current.items] }))
-      return created
+      if (hasEntityId(created)) {
+        setData((current) => ({
+          ...current,
+          items: [created, ...current.items.filter((item) => item.id !== created.id)],
+        }))
+        void syncItemAlerts()
+        return created
+      }
+
+      const items = await refreshItems()
+      await syncItemAlerts()
+      return (
+        items.find(
+          (item) => item.itemCode === payload.itemCode || item.name?.trim() === payload.name?.trim(),
+        ) ?? created
+      )
     },
-    [withLoading],
+    [refreshItems, syncItemAlerts, withLoading],
   )
 
   const updateItem = useCallback(
     async (id, payload) => {
       const updated = await withLoading('items', () => itemsApi.update(id, payload))
-      setData((current) => ({
-        ...current,
-        items: current.items.map((item) => (item.id === id ? updated : item)),
-      }))
-      return updated
+      if (hasEntityId(updated)) {
+        setData((current) => ({
+          ...current,
+          items: current.items.map((item) => (item.id === id ? updated : item)),
+        }))
+        void syncItemAlerts()
+        return updated
+      }
+
+      const items = await refreshItems()
+      await syncItemAlerts()
+      return items.find((item) => item.id === id) ?? updated
     },
-    [withLoading],
+    [refreshItems, syncItemAlerts, withLoading],
   )
 
   const deleteItem = useCallback(
@@ -272,17 +304,26 @@ export function DataProvider({ children }) {
         ...current,
         items: current.items.filter((item) => item.id !== id),
       }))
+      void syncItemAlerts()
     },
-    [withLoading],
+    [syncItemAlerts, withLoading],
   )
 
   const createProject = useCallback(
     async (payload) => {
       const created = await withLoading('projects', () => projectsApi.create(payload))
-      setData((current) => ({ ...current, projects: [created, ...current.projects] }))
-      return created
+      if (hasEntityId(created)) {
+        setData((current) => ({
+          ...current,
+          projects: [created, ...current.projects.filter((project) => project.id !== created.id)],
+        }))
+        return created
+      }
+
+      const projects = await refreshProjects()
+      return projects.find((project) => project.name?.trim() === payload.name?.trim()) ?? created
     },
-    [withLoading],
+    [refreshProjects, withLoading],
   )
 
   const updateProject = useCallback(
@@ -311,10 +352,18 @@ export function DataProvider({ children }) {
   const createUnit = useCallback(
     async (payload) => {
       const created = await withLoading('units', () => unitsApi.create(payload))
-      setData((current) => ({ ...current, units: [created, ...current.units] }))
-      return created
+      if (hasEntityId(created)) {
+        setData((current) => ({
+          ...current,
+          units: [created, ...current.units.filter((unit) => unit.id !== created.id)],
+        }))
+        return created
+      }
+
+      const units = await refreshUnits()
+      return units.find((unit) => unit.name?.trim() === payload.name?.trim()) ?? created
     },
-    [withLoading],
+    [refreshUnits, withLoading],
   )
 
   const updateUnit = useCallback(
@@ -343,10 +392,24 @@ export function DataProvider({ children }) {
   const createManufacture = useCallback(
     async (payload) => {
       const created = await withLoading('manufactures', () => manufacturesApi.create(payload))
-      setData((current) => ({ ...current, manufactures: [created, ...current.manufactures] }))
-      return created
+      if (hasEntityId(created)) {
+        setData((current) => ({
+          ...current,
+          manufactures: [
+            created,
+            ...current.manufactures.filter((manufacture) => manufacture.id !== created.id),
+          ],
+        }))
+        return created
+      }
+
+      const manufactures = await refreshManufactures()
+      return (
+        manufactures.find((manufacture) => manufacture.name?.trim() === payload.name?.trim()) ??
+        created
+      )
     },
-    [withLoading],
+    [refreshManufactures, withLoading],
   )
 
   const updateManufacture = useCallback(
@@ -379,12 +442,21 @@ export function DataProvider({ children }) {
   const createVoucher = useCallback(
     async (payload) => {
       const raw = await withLoading('vouchers', () => vouchersApi.create(payload))
-      // ✅ FIX: normalize the newly created voucher before adding it to state
-      const created = normalizeVoucher(raw)
-      setData((current) => ({ ...current, vouchers: [created, ...current.vouchers] }))
-      return created
+      const created = normalizeVoucher(raw ?? {})
+
+      if (hasEntityId(created)) {
+        setData((current) => ({
+          ...current,
+          vouchers: [created, ...current.vouchers.filter((voucher) => voucher.id !== created.id)],
+        }))
+      } else {
+        await refreshVouchers()
+      }
+
+      await Promise.allSettled([refreshItems(), refreshMinimumNotifications()])
+      return hasEntityId(created) ? created : null
     },
-    [withLoading],
+    [refreshItems, refreshMinimumNotifications, refreshVouchers, withLoading],
   )
 
   const deleteVoucher = useCallback(
@@ -394,12 +466,18 @@ export function DataProvider({ children }) {
         ...current,
         vouchers: current.vouchers.filter((voucher) => voucher.id !== id),
       }))
+      await Promise.allSettled([refreshItems(), refreshMinimumNotifications()])
     },
-    [withLoading],
+    [refreshItems, refreshMinimumNotifications, withLoading],
   )
 
   const exportVouchersToExcel = useCallback(
     async (payload) => withLoading('vouchers', () => vouchersApi.exportExcel(payload)),
+    [withLoading],
+  )
+
+  const exportItemsToExcel = useCallback(
+    async (payload) => withLoading('items', () => itemsApi.exportExcel(payload)),
     [withLoading],
   )
 
@@ -430,6 +508,7 @@ export function DataProvider({ children }) {
       createVoucher,
       deleteVoucher,
       exportVouchersToExcel,
+      exportItemsToExcel,
     }),
     [
       data,
@@ -457,6 +536,7 @@ export function DataProvider({ children }) {
       createVoucher,
       deleteVoucher,
       exportVouchersToExcel,
+      exportItemsToExcel,
     ],
   )
 

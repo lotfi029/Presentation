@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Card from '../shared/Card'
 import ItemForm from '../forms/ItemForm'
 import Table from '../shared/Table'
@@ -6,15 +6,46 @@ import Button from '../shared/Button'
 import { useData } from '../../hooks/useData'
 import { useLanguage } from '../../hooks/useLanguage'
 import { useNotification } from '../../hooks/useNotification'
-import { formatNumber } from '../../utils/formatters'
+import { friendlyError } from '../../context/DataContext'
+import { downloadBlob, formatNumber } from '../../utils/formatters'
 import EditModal from '../modals/EditModal'
 
 export default function ItemsManagement() {
-  const { items, createItem, updateItem, deleteItem, loadingMap } = useData()
+  const { items, createItem, updateItem, deleteItem, exportItemsToExcel, loadingMap } = useData()
   const { t, language } = useLanguage()
   const notification = useNotification()
   const locale = language === 'ar' ? 'ar-EG' : 'en-US'
   const [editingItem, setEditingItem] = useState(null)
+  const [filters, setFilters] = useState({
+    name: '',
+    itemCode: '',
+    minQuantity: '',
+    maxQuantity: '',
+  })
+
+  const filteredItems = useMemo(() => {
+    const normalizedName = filters.name.trim().toLowerCase()
+    const normalizedCode = filters.itemCode.trim().toLowerCase()
+
+    return items.filter((item) => {
+      if (normalizedName && !item.name?.toLowerCase().includes(normalizedName)) return false
+      if (normalizedCode && !item.itemCode?.toLowerCase().includes(normalizedCode)) return false
+      if (filters.minQuantity !== '' && Number(item.quantity) < Number(filters.minQuantity)) {
+        return false
+      }
+      if (filters.maxQuantity !== '' && Number(item.quantity) > Number(filters.maxQuantity)) {
+        return false
+      }
+      return true
+    })
+  }, [filters, items])
+
+  const buildExportPayload = () => ({
+    name: filters.name.trim() || null,
+    itemCode: filters.itemCode.trim() || null,
+    minQuantity: filters.minQuantity === '' ? null : Number(filters.minQuantity),
+    maxQuantity: filters.maxQuantity === '' ? null : Number(filters.maxQuantity),
+  })
 
   const handleCreate = async (values) => {
     try {
@@ -47,6 +78,17 @@ export default function ItemsManagement() {
     }
   }
 
+  const handleExport = async () => {
+    try {
+      const blob = await exportItemsToExcel(buildExportPayload())
+      downloadBlob(blob, 'items.xlsx')
+      notification.success(t('exportSuccess'))
+    } catch (error) {
+      const friendly = friendlyError(error?.message ?? '')
+      notification.error(language === 'ar' ? friendly.ar : friendly.en)
+    }
+  }
+
   return (
     <div className="content-grid">
       <Card title={t('addNew')} subtitle={t('itemsSub')}>
@@ -63,7 +105,49 @@ export default function ItemsManagement() {
         />
       </Card>
 
-      <Card title={t('items')}>
+      <Card
+        title={t('items')}
+        actions={
+          <Button variant="primary" onClick={handleExport} disabled={loadingMap.items}>
+            {t('exportExcel')}
+          </Button>
+        }
+      >
+        <div className="filter-row">
+          <input
+            className="form-control"
+            value={filters.name}
+            placeholder={t('itemName')}
+            onChange={(event) => setFilters((current) => ({ ...current, name: event.target.value }))}
+          />
+          <input
+            className="form-control"
+            value={filters.itemCode}
+            placeholder={t('itemCode')}
+            onChange={(event) =>
+              setFilters((current) => ({ ...current, itemCode: event.target.value }))
+            }
+          />
+          <input
+            className="form-control"
+            type="number"
+            value={filters.minQuantity}
+            placeholder={t('minQuantity')}
+            onChange={(event) =>
+              setFilters((current) => ({ ...current, minQuantity: event.target.value }))
+            }
+          />
+          <input
+            className="form-control"
+            type="number"
+            value={filters.maxQuantity}
+            placeholder={t('maxQuantity')}
+            onChange={(event) =>
+              setFilters((current) => ({ ...current, maxQuantity: event.target.value }))
+            }
+          />
+        </div>
+
         <Table
           columns={[
             { key: 'name', label: t('itemName') },
@@ -72,7 +156,7 @@ export default function ItemsManagement() {
             { key: 'min', label: t('minQuantity') },
             { key: 'actions', label: t('actions') },
           ]}
-          data={items}
+          data={filteredItems}
           emptyMessage={t('empty')}
           renderRow={(item) => (
             <tr key={item.id}>
