@@ -25,6 +25,13 @@ export default function AllVouchers() {
     maxQuantity: '',
   })
 
+  const getVoucherTypeLabel = (voucher) => {
+    const isImport =
+      voucher.IsImport ?? voucher.isImport ?? voucher.isImporting ?? false
+
+    return isImport ? t('import') : t('export')
+  }
+
   const filteredVouchers = useMemo(() => {
     return vouchers.filter((voucher) => {
       const voucherDate = voucher.createdAt ? new Date(voucher.createdAt) : null
@@ -208,7 +215,7 @@ export default function AllVouchers() {
         emptyMessage={t('empty')}
         renderRow={(voucher) => (
           <tr key={voucher.id}>
-            <td>{voucher.isImporting ? t('import') : t('export')}</td>
+            <td>{getVoucherTypeLabel(voucher)}</td>
             <td>{voucher.voucherNumber}</td>
             <td>
               {voucher.item?.name || '-'}

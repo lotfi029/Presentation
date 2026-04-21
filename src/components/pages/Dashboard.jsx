@@ -9,6 +9,13 @@ export default function Dashboard() {
   const locale = language === 'ar' ? 'ar-EG' : 'en-US'
   const alerts = minimumNotifications
 
+  const getVoucherTypeLabel = (voucher) => {
+    const isImport =
+      voucher.IsImport ?? voucher.isImport ?? voucher.isImporting ?? false
+
+    return isImport ? t('import') : t('export')
+  }
+
   return (
     <div className="page-stack">
       <div className="stats-grid">
@@ -41,7 +48,7 @@ export default function Dashboard() {
                   <div>
                     <strong>{voucher.voucherNumber}</strong>
                     <div className="muted">
-                      {(voucher.isImporting ? t('import') : t('export'))} •{' '}
+                      {getVoucherTypeLabel(voucher)} •{' '}
                       {voucher.item?.name || '-'} • {voucher.project?.name || '-'}
                     </div>
                   </div>

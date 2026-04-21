@@ -10,6 +10,13 @@ export default function SearchVoucher() {
   const [query, setQuery] = useState('')
   const locale = language === 'ar' ? 'ar-EG' : 'en-US'
 
+  const getVoucherTypeLabel = (voucher) => {
+    const isImport =
+      voucher.IsImport ?? voucher.isImport ?? voucher.isImporting ?? false
+
+    return isImport ? t('import') : t('export')
+  }
+
   const results = useMemo(() => {
     const normalized = query.trim().toLowerCase()
     if (!normalized) return []
@@ -20,7 +27,7 @@ export default function SearchVoucher() {
         voucher.item?.name,
         voucher.item?.itemCode,
         voucher.project?.name,
-        voucher.isImporting ? t('import') : t('export'),
+        getVoucherTypeLabel(voucher),
       ]
         .filter(Boolean)
         .join(' ')
@@ -49,7 +56,7 @@ export default function SearchVoucher() {
             <div className="voucher-card-header">
               <div>
                 <strong>{voucher.voucherNumber}</strong>
-                <div className="muted">{voucher.isImporting ? t('import') : t('export')}</div>
+                <div className="muted">{getVoucherTypeLabel(voucher)}</div>
               </div>
               <span>{formatDate(voucher.createdAt, locale)}</span>
             </div>
