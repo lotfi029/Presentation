@@ -11,6 +11,7 @@ export default function SearchableSelect({
 }) {
   const containerRef = useRef(null)
   const [open, setOpen] = useState(false)
+  const [isFiltering, setIsFiltering] = useState(false)
   const selectedOption = useMemo(
     () => options.find((option) => String(option.value) === String(value)),
     [options, value],
@@ -19,6 +20,7 @@ export default function SearchableSelect({
 
   useEffect(() => {
     setQuery(selectedOption?.label ?? '')
+    setIsFiltering(false)
   }, [selectedOption])
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export default function SearchableSelect({
       if (!containerRef.current?.contains(event.target)) {
         setOpen(false)
         setQuery(selectedOption?.label ?? '')
+        setIsFiltering(false)
       }
     }
 
@@ -34,11 +37,13 @@ export default function SearchableSelect({
   }, [selectedOption])
 
   const filteredOptions = useMemo(() => {
+    if (!isFiltering) return options
+
     const normalized = query.trim().toLowerCase()
     if (!normalized) return options
 
     return options.filter((option) => option.label.toLowerCase().includes(normalized))
-  }, [options, query])
+  }, [isFiltering, options, query])
 
   return (
     <div
@@ -52,9 +57,13 @@ export default function SearchableSelect({
         value={query}
         placeholder={open ? searchPlaceholder || placeholder : placeholder}
         disabled={disabled}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          setOpen(true)
+          setIsFiltering(false)
+        }}
         onChange={(event) => {
           setOpen(true)
+          setIsFiltering(true)
           setQuery(event.target.value)
           if (!event.target.value) {
             onChange('')
@@ -75,6 +84,7 @@ export default function SearchableSelect({
                 onClick={() => {
                   onChange(String(option.value))
                   setQuery(option.label)
+                  setIsFiltering(false)
                   setOpen(false)
                 }}
               >
