@@ -20,6 +20,7 @@ export default function SearchVoucher() {
         voucher.item?.name,
         voucher.item?.itemCode,
         voucher.project?.name,
+        voucher.isImporting ? t('import') : t('export'),
       ]
         .filter(Boolean)
         .join(' ')
@@ -27,7 +28,7 @@ export default function SearchVoucher() {
 
       return haystack.includes(normalized)
     })
-  }, [query, vouchers])
+  }, [query, t, vouchers])
 
   return (
     <Card title={t('searchVoucher')} subtitle={t('searchVoucherSub')}>
@@ -46,17 +47,20 @@ export default function SearchVoucher() {
         {results.map((voucher) => (
           <article key={voucher.id} className="voucher-card">
             <div className="voucher-card-header">
-              <strong>{voucher.voucherNumber}</strong>
+              <div>
+                <strong>{voucher.voucherNumber}</strong>
+                <div className="muted">{voucher.isImporting ? t('import') : t('export')}</div>
+              </div>
               <span>{formatDate(voucher.createdAt, locale)}</span>
             </div>
             <div className="voucher-card-grid">
               <div>
                 <label>{t('item')}</label>
-                <div>{voucher.item?.name || '—'}</div>
+                <div>{voucher.item?.name || '-'}</div>
               </div>
               <div>
                 <label>{t('itemCode')}</label>
-                <div>{voucher.item?.itemCode || '—'}</div>
+                <div>{voucher.item?.itemCode || '-'}</div>
               </div>
               <div>
                 <label>{t('quantity')}</label>
@@ -68,11 +72,11 @@ export default function SearchVoucher() {
               </div>
               <div>
                 <label>{t('unit')}</label>
-                <div>{voucher.unit?.name || '—'}</div>
+                <div>{voucher.unit?.name || '-'}</div>
               </div>
               <div>
                 <label>{t('manufacture')}</label>
-                <div>{voucher.manufacture?.name || '—'}</div>
+                <div>{voucher.manufacture?.name || voucher.manufacturer?.name || '-'}</div>
               </div>
             </div>
           </article>

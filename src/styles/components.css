@@ -109,6 +109,12 @@ th {
   font-size: 0.82rem;
 }
 
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .voucher-card {
   padding: 16px;
   border: 1px solid var(--border);
@@ -258,4 +264,44 @@ body.ltr .notif-panel {
 
 .modal-header h3 {
   margin: 0;
+}
+
+.searchable-select {
+  position: relative;
+}
+
+.searchable-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline: 0;
+  z-index: 20;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: white;
+  box-shadow: var(--shadow);
+}
+
+.searchable-select-option,
+.searchable-select-empty {
+  width: 100%;
+  padding: 10px 12px;
+  text-align: start;
+}
+
+.searchable-select-option {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.searchable-select-option:hover,
+.searchable-select-option.active {
+  background: var(--surface-2);
+}
+
+.searchable-select-empty {
+  color: var(--text-muted);
 }

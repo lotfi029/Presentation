@@ -1,17 +1,20 @@
+import { useEffect, useMemo } from 'react'
 import { itemSchema } from '../../utils/validators'
 import { useForm } from '../../hooks/useForm'
 import Button from '../shared/Button'
 import FormGroup from '../shared/FormGroup'
 
 export default function ItemForm({ initialValues, onSubmit, loading, labels }) {
-  const defaultValues =
-    initialValues ?? {
-      name: '',
-      itemCode: '',
-      quantity: 0,
-      minQuantity: 0,
-      maxQuantity: 1,
-    }
+  const defaultValues = useMemo(
+    () =>
+      initialValues ?? {
+        name: '',
+        itemCode: '',
+        quantity: 0,
+        minQuantity: 0,
+      },
+    [initialValues],
+  )
 
   const {
     register,
@@ -22,6 +25,10 @@ export default function ItemForm({ initialValues, onSubmit, loading, labels }) {
     schema: itemSchema,
     defaultValues,
   })
+
+  useEffect(() => {
+    reset(defaultValues)
+  }, [defaultValues, reset])
 
   const submit = handleSubmit(async (values) => {
     await onSubmit(values)
@@ -51,15 +58,6 @@ export default function ItemForm({ initialValues, onSubmit, loading, labels }) {
             {...register('minQuantity')}
           />
         </FormGroup>
-        <FormGroup label={labels.maxQuantity} error={errors.maxQuantity?.message} required>
-          <input
-            className={`form-control ${errors.maxQuantity ? 'form-control-error' : ''}`}
-            type="number"
-            {...register('maxQuantity')}
-          />
-        </FormGroup>
-      </div>
-      <div className="form-row">
         <FormGroup label={labels.quantity} error={errors.quantity?.message} required>
           <input
             className={`form-control ${errors.quantity ? 'form-control-error' : ''}`}

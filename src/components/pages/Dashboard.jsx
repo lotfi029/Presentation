@@ -41,7 +41,8 @@ export default function Dashboard() {
                   <div>
                     <strong>{voucher.voucherNumber}</strong>
                     <div className="muted">
-                      {voucher.item?.name || '—'} • {voucher.project?.name || '—'}
+                      {(voucher.isImporting ? t('import') : t('export'))} •{' '}
+                      {voucher.item?.name || '-'} • {voucher.project?.name || '-'}
                     </div>
                   </div>
                   <span>{formatDate(voucher.createdAt, locale)}</span>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { voucherSchema } from '../../utils/validators'
 import { useForm } from '../../hooks/useForm'
 import { useData } from '../../hooks/useData'
@@ -8,11 +8,12 @@ import FormGroup from '../shared/FormGroup'
 import Button from '../shared/Button'
 import UnitModal from '../modals/UnitModal'
 import ManufactureModal from '../modals/ManufactureModal'
+import ItemModal from '../modals/ItemModal'
+import SearchableSelect from '../shared/SearchableSelect'
 
 export default function VoucherForm() {
   const defaultValues = {
     voucherType: 'import',
-    createdAt: new Date().toISOString().slice(0, 10),
     voucherNumber: '',
     itemId: '',
     quantity: 1,
@@ -28,6 +29,7 @@ export default function VoucherForm() {
     units,
     manufactures,
     projects,
+    createItem,
     createUnit,
     createManufacture,
     createVoucher,
@@ -35,6 +37,7 @@ export default function VoucherForm() {
   } = useData()
   const { t } = useLanguage()
   const notification = useNotification()
+  const [itemModalOpen, setItemModalOpen] = useState(false)
   const [unitModalOpen, setUnitModalOpen] = useState(false)
   const [manufactureModalOpen, setManufactureModalOpen] = useState(false)
 
@@ -43,17 +46,63 @@ export default function VoucherForm() {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting, isValid },
   } = useForm({
     schema: voucherSchema,
     defaultValues,
   })
 
+  const voucherType = watch('voucherType')
+  const itemId = watch('itemId')
+  const unitId = watch('unitId')
+  const manufacturerId = watch('manufacturerId')
+  const projectId = watch('projectId')
+
+  const typeOptions = useMemo(
+    () => [
+      { value: 'import', label: t('import') },
+      { value: 'export', label: t('export') },
+    ],
+    [t],
+  )
+  const itemOptions = useMemo(
+    () =>
+      items.map((item) => ({
+        value: item.id,
+        label: `${item.itemCode} - ${item.name}`,
+      })),
+    [items],
+  )
+  const unitOptions = useMemo(
+    () =>
+      units.map((unit) => ({
+        value: unit.id,
+        label: unit.name,
+      })),
+    [units],
+  )
+  const manufactureOptions = useMemo(
+    () =>
+      manufactures.map((manufacture) => ({
+        value: manufacture.id,
+        label: manufacture.name,
+      })),
+    [manufactures],
+  )
+  const projectOptions = useMemo(
+    () =>
+      projects.map((project) => ({
+        value: project.id,
+        label: project.name,
+      })),
+    [projects],
+  )
+
   const submit = handleSubmit(async (values) => {
     try {
       await createVoucher({
         isImporting: values.voucherType === 'import',
-        createdAt: new Date(values.createdAt).toISOString(),
         voucherNumber: values.voucherNumber,
         itemId: Number(values.itemId),
         quantity: Number(values.quantity),
@@ -61,6 +110,7 @@ export default function VoucherForm() {
         manufacturerId: Number(values.manufacturerId),
         unitId: Number(values.unitId),
         projectId: Number(values.projectId),
+        notes: values.notes?.trim() ? values.notes.trim() : null,
       })
 
       notification.success(t('createSuccess'))
@@ -84,7 +134,6 @@ export default function VoucherForm() {
 
       window.setTimeout(() => reset({
         voucherType: values.voucherType,
-        createdAt: new Date().toISOString().slice(0, 10),
         voucherNumber: '',
         itemId: '',
         quantity: 1,
@@ -95,14 +144,37 @@ export default function VoucherForm() {
         notes: '',
       }), 0)
     } catch (error) {
-      notification.error(error.message)
+      const friendlyMessage =
+        /bad request|quantity|stock|enough|insufficient/i.test(error.message)
+          ? t('insufficientQuantity')
+          : error.message
+      notification.error(friendlyMessage)
     }
   })
+
+  useEffect(() => {
+    register('voucherType')
+    register('itemId')
+    register('unitId')
+    register('manufacturerId')
+    register('projectId')
+  }, [register])
+
+  const createInlineItem = async (payload) => {
+    try {
+      const created = await createItem(payload)
+      setValue('itemId', String(created.id), { shouldValidate: true, shouldDirty: true })
+      setItemModalOpen(false)
+      notification.success(t('createSuccess'))
+    } catch (error) {
+      notification.error(error.message)
+    }
+  }
 
   const createInlineUnit = async (payload) => {
     try {
       const created = await createUnit(payload)
-      setValue('unitId', String(created.id))
+      setValue('unitId', String(created.id), { shouldValidate: true, shouldDirty: true })
       setUnitModalOpen(false)
       notification.success(t('createSuccess'))
     } catch (error) {
@@ -113,7 +185,7 @@ export default function VoucherForm() {
   const createInlineManufacture = async (payload) => {
     try {
       const created = await createManufacture(payload)
-      setValue('manufacturerId', String(created.id))
+      setValue('manufacturerId', String(created.id), { shouldValidate: true, shouldDirty: true })
       setManufactureModalOpen(false)
       notification.success(t('createSuccess'))
     } catch (error) {
@@ -122,6 +194,11 @@ export default function VoucherForm() {
   }
 
   const labels = {
+    addItem: t('addItem'),
+    itemName: t('itemName'),
+    itemCode: t('itemCode'),
+    quantity: t('quantity'),
+    minQuantity: t('minQuantity'),
     unit: t('unit'),
     manufacture: t('manufacture'),
     addUnit: t('addUnit'),
@@ -135,13 +212,14 @@ export default function VoucherForm() {
       <form onSubmit={submit} className="voucher-form">
         <div className="form-row">
           <FormGroup label={t('type')} error={errors.voucherType?.message} required>
-            <select
-              className={`form-control ${errors.voucherType ? 'form-control-error' : ''}`}
-              {...register('voucherType')}
-            >
-              <option value="import">{t('import')}</option>
-              <option value="export">{t('export')}</option>
-            </select>
+            <SearchableSelect
+              value={voucherType}
+              onChange={(value) => setValue('voucherType', value, { shouldValidate: true, shouldDirty: true })}
+              options={typeOptions}
+              placeholder={t('type')}
+              searchPlaceholder={t('search')}
+              error={errors.voucherType?.message}
+            />
           </FormGroup>
           <FormGroup label={t('voucherNumber')} error={errors.voucherNumber?.message} required>
             <input
@@ -152,23 +230,26 @@ export default function VoucherForm() {
         </div>
 
         <div className="form-row">
-          <FormGroup label={t('item')} error={errors.itemId?.message} required>
-            <select className={`form-control ${errors.itemId ? 'form-control-error' : ''}`} {...register('itemId')}>
-              <option value="" />
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.itemCode} - {item.name}
-                </option>
-              ))}
-            </select>
-          </FormGroup>
-          <FormGroup label={t('date')} error={errors.createdAt?.message} required>
-            <input
-              className={`form-control ${errors.createdAt ? 'form-control-error' : ''}`}
-              type="date"
-              {...register('createdAt')}
+          <FormGroup
+            label={t('item')}
+            error={errors.itemId?.message}
+            required
+            actions={
+              <Button type="button" variant="ghost" className="btn-sm" onClick={() => setItemModalOpen(true)}>
+                + {t('addItem')}
+              </Button>
+            }
+          >
+            <SearchableSelect
+              value={itemId}
+              onChange={(value) => setValue('itemId', value, { shouldValidate: true, shouldDirty: true })}
+              options={itemOptions}
+              placeholder={t('item')}
+              searchPlaceholder={t('search')}
+              error={errors.itemId?.message}
             />
           </FormGroup>
+          <div />
         </div>
 
         <div className="form-row form-row-4">
@@ -187,14 +268,14 @@ export default function VoucherForm() {
               </Button>
             }
           >
-            <select className={`form-control ${errors.unitId ? 'form-control-error' : ''}`} {...register('unitId')}>
-              <option value="" />
-              {units.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.name}
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={unitId}
+              onChange={(value) => setValue('unitId', value, { shouldValidate: true, shouldDirty: true })}
+              options={unitOptions}
+              placeholder={t('unit')}
+              searchPlaceholder={t('search')}
+              error={errors.unitId?.message}
+            />
           </FormGroup>
           <FormGroup label={t('quantity')} error={errors.quantity?.message} required>
             <input
@@ -212,17 +293,14 @@ export default function VoucherForm() {
             />
           </FormGroup>
           <FormGroup label={t('project')} error={errors.projectId?.message} required>
-            <select
-              className={`form-control ${errors.projectId ? 'form-control-error' : ''}`}
-              {...register('projectId')}
-            >
-              <option value="" />
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={projectId}
+              onChange={(value) => setValue('projectId', value, { shouldValidate: true, shouldDirty: true })}
+              options={projectOptions}
+              placeholder={t('project')}
+              searchPlaceholder={t('search')}
+              error={errors.projectId?.message}
+            />
           </FormGroup>
         </div>
 
@@ -242,17 +320,16 @@ export default function VoucherForm() {
               </Button>
             }
           >
-            <select
-              className={`form-control ${errors.manufacturerId ? 'form-control-error' : ''}`}
-              {...register('manufacturerId')}
-            >
-              <option value="" />
-              {manufactures.map((manufacture) => (
-                <option key={manufacture.id} value={manufacture.id}>
-                  {manufacture.name}
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={manufacturerId}
+              onChange={(value) =>
+                setValue('manufacturerId', value, { shouldValidate: true, shouldDirty: true })
+              }
+              options={manufactureOptions}
+              placeholder={t('manufacture')}
+              searchPlaceholder={t('search')}
+              error={errors.manufacturerId?.message}
+            />
           </FormGroup>
           <FormGroup label={t('notes')} error={errors.notes?.message}>
             <textarea
@@ -273,6 +350,13 @@ export default function VoucherForm() {
         </div>
       </form>
 
+      <ItemModal
+        open={itemModalOpen}
+        onClose={() => setItemModalOpen(false)}
+        onCreate={createInlineItem}
+        loading={isSubmitting}
+        labels={labels}
+      />
       <UnitModal
         open={unitModalOpen}
         onClose={() => setUnitModalOpen(false)}

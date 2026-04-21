@@ -195,6 +195,7 @@ export default function AllVouchers() {
 
       <Table
         columns={[
+          { key: 'type', label: t('type') },
           { key: 'voucherNumber', label: t('voucherNumber') },
           { key: 'item', label: t('item') },
           { key: 'quantity', label: t('quantity') },
@@ -207,14 +208,15 @@ export default function AllVouchers() {
         emptyMessage={t('empty')}
         renderRow={(voucher) => (
           <tr key={voucher.id}>
+            <td>{voucher.isImporting ? t('import') : t('export')}</td>
             <td>{voucher.voucherNumber}</td>
             <td>
-              {voucher.item?.name || '—'}
-              <div className="table-subline">{voucher.item?.itemCode || '—'}</div>
+              {voucher.item?.name || '-'}
+              <div className="table-subline">{voucher.item?.itemCode || '-'}</div>
             </td>
             <td>{formatNumber(voucher.quantity, locale)}</td>
             <td>{formatNumber(voucher.price, locale)}</td>
-            <td>{voucher.project?.name || '—'}</td>
+            <td>{voucher.project?.name || '-'}</td>
             <td>{formatDate(voucher.createdAt, locale)}</td>
             <td>
               <Button variant="danger" className="btn-sm" onClick={() => handleDelete(voucher.id)}>
