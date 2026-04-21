@@ -4,36 +4,41 @@ import Button from '../shared/Button'
 import FormGroup from '../shared/FormGroup'
 
 export default function ProjectForm({ onSubmit, loading, labels }) {
+  const defaultValues = {
+    name: '',
+    location: '',
+  }
+
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isValid, isSubmitting },
   } = useForm({
     schema: projectSchema,
-    defaultValues: {
-      name: '',
-      location: '',
-    },
+    defaultValues,
   })
 
   const submit = handleSubmit(async (values) => {
     await onSubmit(values)
-    reset({ name: '', location: '' })
+    window.setTimeout(() => reset(defaultValues), 0)
   })
 
   return (
     <form onSubmit={submit}>
       <div className="form-row">
         <FormGroup label={labels.project} error={errors.name?.message} required>
-          <input className="form-control" {...register('name')} />
+          <input className={`form-control ${errors.name ? 'form-control-error' : ''}`} {...register('name')} />
         </FormGroup>
         <FormGroup label={labels.location} error={errors.location?.message} required>
-          <input className="form-control" {...register('location')} />
+          <input
+            className={`form-control ${errors.location ? 'form-control-error' : ''}`}
+            {...register('location')}
+          />
         </FormGroup>
       </div>
       <div className="form-actions">
-        <Button type="submit" variant="primary" disabled={loading}>
+        <Button type="submit" variant="primary" disabled={!isValid || isSubmitting || loading}>
           {labels.save}
         </Button>
       </div>

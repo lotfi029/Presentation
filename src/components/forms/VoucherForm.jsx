@@ -10,6 +10,19 @@ import UnitModal from '../modals/UnitModal'
 import ManufactureModal from '../modals/ManufactureModal'
 
 export default function VoucherForm() {
+  const defaultValues = {
+    voucherType: 'import',
+    createdAt: new Date().toISOString().slice(0, 10),
+    voucherNumber: '',
+    itemId: '',
+    quantity: 1,
+    price: 0,
+    manufacturerId: '',
+    unitId: '',
+    projectId: '',
+    notes: '',
+  }
+
   const {
     items,
     units,
@@ -30,21 +43,10 @@ export default function VoucherForm() {
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm({
     schema: voucherSchema,
-    defaultValues: {
-      voucherType: 'import',
-      createdAt: new Date().toISOString().slice(0, 10),
-      voucherNumber: '',
-      itemId: '',
-      quantity: 1,
-      price: 0,
-      manufacturerId: '',
-      unitId: '',
-      projectId: '',
-      notes: '',
-    },
+    defaultValues,
   })
 
   const submit = handleSubmit(async (values) => {
@@ -80,7 +82,7 @@ export default function VoucherForm() {
         notification.warning(`${t('minimumNotificationWarning')}: ${affectedItems}.${extraCount}`)
       }
 
-      reset({
+      window.setTimeout(() => reset({
         voucherType: values.voucherType,
         createdAt: new Date().toISOString().slice(0, 10),
         voucherNumber: '',
@@ -91,7 +93,7 @@ export default function VoucherForm() {
         unitId: '',
         projectId: '',
         notes: '',
-      })
+      }), 0)
     } catch (error) {
       notification.error(error.message)
     }
@@ -133,19 +135,25 @@ export default function VoucherForm() {
       <form onSubmit={submit} className="voucher-form">
         <div className="form-row">
           <FormGroup label={t('type')} error={errors.voucherType?.message} required>
-            <select className="form-control" {...register('voucherType')}>
+            <select
+              className={`form-control ${errors.voucherType ? 'form-control-error' : ''}`}
+              {...register('voucherType')}
+            >
               <option value="import">{t('import')}</option>
               <option value="export">{t('export')}</option>
             </select>
           </FormGroup>
           <FormGroup label={t('voucherNumber')} error={errors.voucherNumber?.message} required>
-            <input className="form-control" {...register('voucherNumber')} />
+            <input
+              className={`form-control ${errors.voucherNumber ? 'form-control-error' : ''}`}
+              {...register('voucherNumber')}
+            />
           </FormGroup>
         </div>
 
         <div className="form-row">
           <FormGroup label={t('item')} error={errors.itemId?.message} required>
-            <select className="form-control" {...register('itemId')}>
+            <select className={`form-control ${errors.itemId ? 'form-control-error' : ''}`} {...register('itemId')}>
               <option value="" />
               {items.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -155,7 +163,11 @@ export default function VoucherForm() {
             </select>
           </FormGroup>
           <FormGroup label={t('date')} error={errors.createdAt?.message} required>
-            <input className="form-control" type="date" {...register('createdAt')} />
+            <input
+              className={`form-control ${errors.createdAt ? 'form-control-error' : ''}`}
+              type="date"
+              {...register('createdAt')}
+            />
           </FormGroup>
         </div>
 
@@ -175,7 +187,7 @@ export default function VoucherForm() {
               </Button>
             }
           >
-            <select className="form-control" {...register('unitId')}>
+            <select className={`form-control ${errors.unitId ? 'form-control-error' : ''}`} {...register('unitId')}>
               <option value="" />
               {units.map((unit) => (
                 <option key={unit.id} value={unit.id}>
@@ -185,13 +197,25 @@ export default function VoucherForm() {
             </select>
           </FormGroup>
           <FormGroup label={t('quantity')} error={errors.quantity?.message} required>
-            <input className="form-control" type="number" {...register('quantity')} />
+            <input
+              className={`form-control ${errors.quantity ? 'form-control-error' : ''}`}
+              type="number"
+              {...register('quantity')}
+            />
           </FormGroup>
           <FormGroup label={t('price')} error={errors.price?.message} required>
-            <input className="form-control" type="number" step="0.01" {...register('price')} />
+            <input
+              className={`form-control ${errors.price ? 'form-control-error' : ''}`}
+              type="number"
+              step="0.01"
+              {...register('price')}
+            />
           </FormGroup>
           <FormGroup label={t('project')} error={errors.projectId?.message} required>
-            <select className="form-control" {...register('projectId')}>
+            <select
+              className={`form-control ${errors.projectId ? 'form-control-error' : ''}`}
+              {...register('projectId')}
+            >
               <option value="" />
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>
@@ -218,7 +242,10 @@ export default function VoucherForm() {
               </Button>
             }
           >
-            <select className="form-control" {...register('manufacturerId')}>
+            <select
+              className={`form-control ${errors.manufacturerId ? 'form-control-error' : ''}`}
+              {...register('manufacturerId')}
+            >
               <option value="" />
               {manufactures.map((manufacture) => (
                 <option key={manufacture.id} value={manufacture.id}>
@@ -228,7 +255,11 @@ export default function VoucherForm() {
             </select>
           </FormGroup>
           <FormGroup label={t('notes')} error={errors.notes?.message}>
-            <textarea className="form-control" rows="4" {...register('notes')} />
+            <textarea
+              className={`form-control ${errors.notes ? 'form-control-error' : ''}`}
+              rows="4"
+              {...register('notes')}
+            />
           </FormGroup>
         </div>
 
@@ -236,7 +267,7 @@ export default function VoucherForm() {
           <Button type="button" variant="ghost" onClick={() => reset()}>
             {t('clear')}
           </Button>
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
+          <Button type="submit" variant="primary" disabled={!isValid || isSubmitting}>
             {t('save')}
           </Button>
         </div>

@@ -5,5 +5,7 @@ export function useForm({ schema, defaultValues }) {
   return useReactHookForm({
     resolver: schema ? zodResolver(schema) : undefined,
     defaultValues,
+    mode: 'onChange',
+    reValidateMode: 'onChange',
   })
 }

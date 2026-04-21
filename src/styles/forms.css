@@ -41,6 +41,16 @@ form {
   border-color: var(--primary);
 }
 
+.form-control-error {
+  border-color: var(--danger);
+  background: rgba(226, 75, 74, 0.04);
+}
+
+.form-control-error:focus {
+  outline-color: rgba(226, 75, 74, 0.2);
+  border-color: var(--danger);
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

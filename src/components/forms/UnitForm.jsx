@@ -8,7 +8,7 @@ export default function UnitForm({ onSubmit, loading, labels, initialValues }) {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isValid, isSubmitting },
   } = useForm({
     schema: simpleNameSchema,
     defaultValues: initialValues ?? { name: '' },
@@ -17,17 +17,17 @@ export default function UnitForm({ onSubmit, loading, labels, initialValues }) {
   const submit = handleSubmit(async (values) => {
     await onSubmit(values)
     if (!initialValues) {
-      reset()
+      window.setTimeout(() => reset({ name: '' }), 0)
     }
   })
 
   return (
     <form onSubmit={submit}>
       <FormGroup label={labels.unit} error={errors.name?.message} required>
-        <input className="form-control" {...register('name')} />
+        <input className={`form-control ${errors.name ? 'form-control-error' : ''}`} {...register('name')} />
       </FormGroup>
       <div className="form-actions">
-        <Button type="submit" variant="primary" disabled={loading}>
+        <Button type="submit" variant="primary" disabled={!isValid || isSubmitting || loading}>
           {labels.save}
         </Button>
       </div>
