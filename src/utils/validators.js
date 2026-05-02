@@ -20,6 +20,10 @@ export const itemSchema = z.object({
 })
 
 export const projectSchema = z.object({
+  id: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.coerce.number().int().min(-2147483648).max(2147483647),
+  ),
   name: z.string().min(1),
   location: z.string().min(1),
 })
