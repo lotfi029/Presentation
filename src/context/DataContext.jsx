@@ -321,7 +321,14 @@ export function DataProvider({ children }) {
       }
 
       const projects = await refreshProjects()
-      return projects.find((project) => project.name?.trim() === payload.name?.trim()) ?? created
+      return (
+        projects.find(
+          (project) =>
+            project.projectNumber?.trim() === payload.projectNumber?.trim() ||
+            project.projectName?.trim() === payload.projectNumber?.trim() ||
+            project.name?.trim() === payload.name?.trim(),
+        ) ?? created
+      )
     },
     [refreshProjects, withLoading],
   )

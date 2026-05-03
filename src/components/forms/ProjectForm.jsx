@@ -5,7 +5,7 @@ import FormGroup from '../shared/FormGroup'
 
 export default function ProjectForm({ onSubmit, loading, labels }) {
   const defaultValues = {
-    id: '',
+    projectNumber: '',
     name: '',
     location: '',
   }
@@ -28,11 +28,10 @@ export default function ProjectForm({ onSubmit, loading, labels }) {
   return (
     <form onSubmit={submit}>
       <div className="form-row">
-        <FormGroup label={labels.id} error={errors.id?.message} required>
+        <FormGroup label={labels.projectNumber} error={errors.projectNumber?.message} required>
           <input
-            type="number"
-            className={`form-control ${errors.id ? 'form-control-error' : ''}`}
-            {...register('id')}
+            className={`form-control ${errors.projectNumber ? 'form-control-error' : ''}`}
+            {...register('projectNumber')}
           />
         </FormGroup>
         <FormGroup label={labels.project} error={errors.name?.message} required>

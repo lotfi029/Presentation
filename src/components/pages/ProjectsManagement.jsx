@@ -37,7 +37,7 @@ export default function ProjectsManagement() {
           onSubmit={handleCreate}
           loading={loadingMap.projects}
           labels={{
-            id: t('id'),
+            projectNumber: t('projectNumber'),
             project: t('project'),
             location: t('location'),
             save: t('save'),
@@ -48,7 +48,7 @@ export default function ProjectsManagement() {
       <Card title={t('projects')}>
         <Table
           columns={[
-            { key: 'id', label: t('id') },
+            { key: 'projectNumber', label: t('projectNumber') },
             { key: 'name', label: t('project') },
             { key: 'location', label: t('location') },
             { key: 'actions', label: t('actions') },
@@ -57,7 +57,7 @@ export default function ProjectsManagement() {
           emptyMessage={t('empty')}
           renderRow={(project) => (
             <tr key={project.id}>
-              <td>{project.id}</td>
+              <td>{project.projectNumber ?? project.projectName ?? '-'}</td>
               <td>{project.name}</td>
               <td>{project.location}</td>
               <td>

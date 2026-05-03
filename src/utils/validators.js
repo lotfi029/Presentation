@@ -7,7 +7,7 @@ export const voucherSchema = z.object({
   price: z.coerce.number().min(0),
   manufacturerId: z.coerce.number().int().positive(),
   unitId: z.coerce.number().int().positive(),
-  projectId: z.coerce.number().int().positive(),
+  projectNumber: z.string().min(1),
   voucherType: z.enum(['import', 'export']),
   notes: z.string().optional().nullable(),
 })
@@ -20,10 +20,7 @@ export const itemSchema = z.object({
 })
 
 export const projectSchema = z.object({
-  id: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.coerce.number().int().min(-2147483648).max(2147483647),
-  ),
+  projectNumber: z.string().min(1),
   name: z.string().min(1),
   location: z.string().min(1),
 })

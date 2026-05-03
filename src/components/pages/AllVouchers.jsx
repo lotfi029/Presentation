@@ -18,7 +18,7 @@ export default function AllVouchers() {
     startDate: '',
     endDate: '',
     itemId: '',
-    projectId: '',
+    projectNumber: '',
     manufacturerId: '',
     minPrice: '',
     maxPrice: '',
@@ -46,8 +46,15 @@ export default function AllVouchers() {
         ) {
           return false
         }
+        const voucherProjectNumber = String(
+          voucher.projectNumber ??
+            voucher.project?.projectNumber ??
+            voucher.project?.projectName ??
+            '',
+        )
+
         if (filters.itemId && String(voucher.itemId) !== filters.itemId) return false
-        if (filters.projectId && String(voucher.projectId) !== filters.projectId) return false
+        if (filters.projectNumber && voucherProjectNumber !== filters.projectNumber) return false
         if (filters.manufacturerId && manufacturerId !== filters.manufacturerId) return false
         if (filters.minPrice && Number(voucher.price) < Number(filters.minPrice)) return false
         if (filters.maxPrice && Number(voucher.price) > Number(filters.maxPrice)) return false
@@ -64,7 +71,7 @@ export default function AllVouchers() {
       startDate: filters.startDate ? new Date(filters.startDate).toISOString() : null,
       endDate: filters.endDate ? new Date(`${filters.endDate}T23:59:59.999`).toISOString() : null,
       itemId: filters.itemId ? Number(filters.itemId) : null,
-      projectId: filters.projectId ? Number(filters.projectId) : null,
+      projectNumber: filters.projectNumber || null,
       manufacturerId: filters.manufacturerId ? Number(filters.manufacturerId) : null,
       minPrice: filters.minPrice ? Number(filters.minPrice) : null,
       maxPrice: filters.maxPrice ? Number(filters.maxPrice) : null,
@@ -138,15 +145,15 @@ export default function AllVouchers() {
         </select>
         <select
           className="form-control"
-          value={filters.projectId}
+          value={filters.projectNumber}
           onChange={(event) =>
-            setFilters((current) => ({ ...current, projectId: event.target.value }))
+            setFilters((current) => ({ ...current, projectNumber: event.target.value }))
           }
         >
           <option value="">{t('project')}</option>
           {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name}
+            <option key={project.id} value={project.projectNumber ?? project.projectName ?? project.id}>
+              {project.projectNumber ?? project.projectName ?? project.id} - {project.name}
             </option>
           ))}
         </select>
