@@ -7,7 +7,7 @@ export const voucherSchema = z.object({
   price: z.coerce.number().min(0),
   manufacturerId: z.coerce.number().int().positive(),
   unitId: z.coerce.number().int().positive(),
-  projectNumber: z.string().min(1),
+  projectId: z.coerce.number().int().positive(),
   voucherType: z.enum(['import', 'export']),
   notes: z.string().optional().nullable(),
 })

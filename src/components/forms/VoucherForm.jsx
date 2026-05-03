@@ -20,7 +20,7 @@ export default function VoucherForm() {
     price: 0,
     manufacturerId: '',
     unitId: '',
-    projectNumber: '',
+    projectId: '',
     notes: '',
   }
 
@@ -57,7 +57,7 @@ export default function VoucherForm() {
   const itemId = watch('itemId')
   const unitId = watch('unitId')
   const manufacturerId = watch('manufacturerId')
-  const projectNumber = watch('projectNumber')
+  const projectId = watch('projectId')
 
   const typeOptions = useMemo(
     () => [
@@ -93,7 +93,7 @@ export default function VoucherForm() {
   const projectOptions = useMemo(
     () =>
       projects.map((project) => ({
-        value: project.projectNumber ?? project.projectName ?? project.id,
+        value: String(project.id),
         label: project.location
           ? `${project.projectNumber ?? project.projectName ?? project.id} - ${project.name} - ${project.location}`
           : `${project.projectNumber ?? project.projectName ?? project.id} - ${project.name}`,
@@ -115,7 +115,7 @@ export default function VoucherForm() {
         price: Number(values.price),
         manufacturerId: Number(values.manufacturerId),
         unitId: Number(values.unitId),
-        projectNumber: values.projectNumber,
+        projectId: Number(values.projectId),
         notes: values.notes?.trim() ? values.notes.trim() : null,
       })
 
@@ -148,7 +148,7 @@ export default function VoucherForm() {
             price: 0,
             manufacturerId: '',
             unitId: '',
-            projectNumber: '',
+            projectId: '',
             notes: '',
           }),
         0,
@@ -167,7 +167,7 @@ export default function VoucherForm() {
     register('itemId')
     register('unitId')
     register('manufacturerId')
-    register('projectNumber')
+    register('projectId')
   }, [register])
 
   const createInlineItem = async (payload) => {
@@ -309,16 +309,16 @@ export default function VoucherForm() {
               {...register('price')}
             />
           </FormGroup>
-          <FormGroup label={t('project')} error={errors.projectNumber?.message} required>
+          <FormGroup label={t('project')} error={errors.projectId?.message} required>
             <SearchableSelect
-              value={projectNumber}
+              value={projectId}
               onChange={(value) =>
-                setValue('projectNumber', value, { shouldValidate: true, shouldDirty: true })
+                setValue('projectId', value, { shouldValidate: true, shouldDirty: true })
               }
               options={projectOptions}
               placeholder={t('project')}
               searchPlaceholder={t('search')}
-              error={errors.projectNumber?.message}
+              error={errors.projectId?.message}
             />
           </FormGroup>
         </div>
